@@ -1,0 +1,5 @@
+{
+  "name": "Portal Dashboard",
+  "description": "A comprehensive management portal for leads, quotes, marketing campaigns, and inventory management, designed to interface with a robust Node.js backend.",
+  "requestFramePermissions": []
+}
