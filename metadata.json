@@ -1,5 +1,7 @@
 {
-  "name": "Portal Dashboard",
-  "description": "A comprehensive management portal for leads, quotes, marketing campaigns, and inventory management, designed to interface with a robust Node.js backend.",
-  "requestFramePermissions": []
+  "name": "American Iron Hub Pro",
+  "description": "Enterprise industrial management terminal for global logistics and stockpile operations.",
+  "requestFramePermissions": [
+    "camera"
+  ]
 }

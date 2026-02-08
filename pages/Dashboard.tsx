@@ -1,25 +1,31 @@
 import React, { useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { api } from '../services/api';
-import { Lead, Quote } from '../types';
-import { TrendingUp, Users, FileCheck, DollarSign } from 'lucide-react';
+import { Lead, Quote, SystemHealth } from '../types';
+import { Activity, ShieldCheck, Box, Clock, TrendingUp, AlertCircle, Database } from 'lucide-react';
 
 const Dashboard = () => {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [stats, setStats] = useState({ leads: 0, revenue: 0, pending: 0 });
+  const [health, setHealth] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [leadsData, quotesData] = await Promise.all([
+        const [leads, quotes, healthData] = await Promise.all([
           api.leads.getAll(),
-          api.quotes.getAll()
+          api.quotes.getAll(),
+          api.health.check()
         ]);
-        setLeads(leadsData);
-        setQuotes(quotesData);
+        
+        const revenue = quotes
+          .filter(q => q.status === 'accepted')
+          .reduce((sum, q) => sum + q.quote_details.items.reduce((s, i) => s + (i.price * i.quantity), 0), 0);
+
+        setStats({ leads: leads.length, revenue, pending: quotes.filter(q => q.status === 'sent' || q.status === 'draft').length });
+        setHealth(healthData);
       } catch (error) {
-        console.error("Failed to fetch dashboard data");
+        console.error("Operational Hub Service Interrupted");
       } finally {
         setLoading(false);
       }
@@ -27,165 +33,147 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
-  const totalRevenue = quotes
-    .filter(q => q.status === 'accepted' || q.status === 'sent')
-    .reduce((sum, q) => sum + q.quote_details.items.reduce((s, i) => s + (i.price * i.quantity), 0), 0);
-
-  const stats = [
-    { name: 'Total Leads', value: leads.length, icon: Users, color: 'text-slate-700', bg: 'bg-slate-200' },
-    { name: 'Active Quotes', value: quotes.length, icon: FileCheck, color: 'text-red-700', bg: 'bg-red-100' },
-    { name: 'Conversion Rate', value: '24%', icon: TrendingUp, color: 'text-emerald-700', bg: 'bg-emerald-100' },
-    { name: 'Est. Revenue', value: `$${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-blue-900', bg: 'bg-blue-100' },
+  const throughputData = [
+    { name: '00:00', reqs: 45 },
+    { name: '04:00', reqs: 120 },
+    { name: '08:00', reqs: 890 },
+    { name: '12:00', reqs: 750 },
+    { name: '16:00', reqs: 1100 },
+    { name: '20:00', reqs: 420 },
   ];
 
-  // Mock data for charts
-  const chartData = [
-    { name: 'Mon', leads: 4, quotes: 2 },
-    { name: 'Tue', leads: 3, quotes: 1 },
-    { name: 'Wed', leads: 7, quotes: 5 },
-    { name: 'Thu', leads: 5, quotes: 3 },
-    { name: 'Fri', leads: 8, quotes: 6 },
-    { name: 'Sat', leads: 2, quotes: 1 },
-    { name: 'Sun', leads: 1, quotes: 0 },
-  ];
-
-  if (loading) {
-    return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-slate-200 rounded w-1/4 mb-6"></div>
-        {/* Stats Grid Skeleton */}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white overflow-hidden shadow-sm border border-slate-200 rounded-lg p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 rounded-md p-3 bg-slate-200 h-12 w-12"></div>
-                <div className="ml-5 w-0 flex-1 space-y-2">
-                  <div className="h-4 bg-slate-200 rounded w-1/2"></div>
-                  <div className="h-6 bg-slate-200 rounded w-3/4"></div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Charts Skeleton */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 h-96">
-            <div className="h-6 bg-slate-200 rounded w-1/3 mb-6"></div>
-            <div className="h-64 bg-slate-100 rounded w-full"></div>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 h-96">
-            <div className="h-6 bg-slate-200 rounded w-1/3 mb-6"></div>
-            <div className="h-64 bg-slate-100 rounded w-full"></div>
-          </div>
-        </div>
-
-        {/* Leads Skeleton */}
-        <div className="bg-white shadow-sm rounded-lg border border-slate-200 p-6">
-          <div className="h-6 bg-slate-200 rounded w-1/4 mb-6"></div>
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-16 bg-slate-50 rounded w-full"></div>
-            ))}
-          </div>
-        </div>
+  if (loading) return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {[...Array(4)].map((_, i) => <div key={i} className="h-32 bg-white rounded-xl shadow-sm border border-zinc-200 animate-pulse"></div>)}
       </div>
-    );
-  }
+      <div className="h-96 bg-white rounded-xl shadow-sm border border-zinc-200 animate-pulse"></div>
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-slate-900 uppercase tracking-tight">Dashboard Overview</h1>
-      
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((item) => (
-          <div key={item.name} className="bg-white overflow-hidden shadow-sm border border-slate-200 rounded-lg hover:shadow-md transition-shadow">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className={`flex-shrink-0 rounded-md p-3 ${item.bg}`}>
-                  <item.icon className={`h-6 w-6 ${item.color}`} aria-hidden="true" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-slate-500 truncate font-heading uppercase">{item.name}</dt>
-                    <dd className="text-2xl font-semibold text-slate-900">{item.value}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-          <h3 className="text-lg font-bold text-slate-900 mb-4 uppercase font-heading">Weekly Activity</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="name" tick={{fill: '#64748b'}} axisLine={false} />
-                <YAxis tick={{fill: '#64748b'}} axisLine={false} />
-                <Tooltip contentStyle={{backgroundColor: '#1e293b', color: '#fff', border: 'none'}} />
-                <Bar dataKey="leads" fill="#0f172a" name="New Leads" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="quotes" fill="#b91c1c" name="Quotes Sent" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+    <div className="space-y-8 max-w-[1600px] mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-4xl font-black text-catblack uppercase tracking-tight font-heading leading-none">Terminal Dashboard</h1>
+          <p className="text-zinc-500 font-medium uppercase tracking-widest text-[10px] flex items-center gap-2 mt-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+            Real-time Operational Metrics Monitoring
+          </p>
         </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-          <h3 className="text-lg font-bold text-slate-900 mb-4 uppercase font-heading">Lead Trends</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="name" tick={{fill: '#64748b'}} axisLine={false} />
-                <YAxis tick={{fill: '#64748b'}} axisLine={false} />
-                <Tooltip contentStyle={{backgroundColor: '#1e293b', color: '#fff', border: 'none'}} />
-                <Line type="monotone" dataKey="leads" stroke="#b91c1c" strokeWidth={3} dot={{ r: 4, fill: '#b91c1c' }} activeDot={{ r: 8 }} />
-              </LineChart>
-            </ResponsiveContainer>
+        <div className="flex items-center gap-3 px-5 py-2.5 bg-white border border-zinc-200 rounded-full shadow-sm hover:border-catyellow transition-colors">
+          <Database className="w-4 h-4 text-zinc-400" />
+          <div className="flex flex-col">
+            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest leading-none mb-1">Database Sync</span>
+            <span className="text-xs font-black text-catblack uppercase tracking-tighter leading-none">Healthy // Node-04</span>
           </div>
         </div>
       </div>
 
-      {/* Recent Leads Preview */}
-      <div className="bg-white shadow-sm rounded-lg border border-slate-200">
-        <div className="px-4 py-5 border-b border-slate-100 sm:px-6 bg-slate-50">
-          <h3 className="text-lg leading-6 font-bold text-slate-900 uppercase font-heading">Recent Leads</h3>
+      {/* KPI Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <KpiCard label="Open Opportunities" value={stats.leads} icon={TrendingUp} trend="+12% vs LW" color="text-catblack" bg="bg-catyellow" />
+        <KpiCard label="Confirmed Billing" value={`$${stats.revenue.toLocaleString()}`} icon={ShieldCheck} trend="Stable" color="text-emerald-700" bg="bg-emerald-50" />
+        <KpiCard label="Unreconciled Doc" value={stats.pending} icon={Box} trend="Needs Action" color="text-blue-700" bg="bg-blue-50" />
+        <KpiCard label="Core API Uptime" value={health?.status === 'operational' ? '99.99%' : 'Degraded'} icon={Activity} trend="Operational" color="text-catblack" bg="bg-zinc-100" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Performance Graph */}
+        <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-zinc-200 shadow-sm transition-all hover:shadow-md">
+           <div className="flex justify-between items-center mb-8">
+             <div className="flex items-center gap-3">
+               <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center">
+                 <Activity className="w-5 h-5 text-catyellow" />
+               </div>
+               <div>
+                 <h3 className="text-sm font-black text-catblack uppercase tracking-widest font-heading">Global Hub Traffic</h3>
+                 <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-0.5">Requests Per Minute (RPM)</p>
+               </div>
+             </div>
+             <div className="hidden sm:flex gap-4">
+                <span className="flex items-center text-[10px] font-bold text-zinc-500 uppercase tracking-widest"><span className="w-2 h-2 rounded-full bg-catyellow mr-2"></span>Direct API</span>
+                <span className="flex items-center text-[10px] font-bold text-zinc-500 uppercase tracking-widest"><span className="w-2 h-2 rounded-full bg-catblack mr-2"></span>WebSocket</span>
+             </div>
+           </div>
+           <div className="h-72">
+             <ResponsiveContainer width="100%" height="100%">
+               <AreaChart data={throughputData}>
+                 <defs>
+                   <linearGradient id="colorReqs" x1="0" y1="0" x2="0" y2="1">
+                     <stop offset="5%" stopColor="#FFCD00" stopOpacity={0.15}/>
+                     <stop offset="95%" stopColor="#FFCD00" stopOpacity={0}/>
+                   </linearGradient>
+                 </defs>
+                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}} />
+                 <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}} />
+                 <Tooltip 
+                   contentStyle={{borderRadius: '12px', border: 'none', backgroundColor: '#111111', color: '#fff', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)'}}
+                   itemStyle={{fontWeight: 900, fontSize: '12px', textTransform: 'uppercase'}}
+                 />
+                 <Area type="monotone" dataKey="reqs" stroke="#FFCD00" strokeWidth={4} fillOpacity={1} fill="url(#colorReqs)" />
+               </AreaChart>
+             </ResponsiveContainer>
+           </div>
         </div>
-        <ul className="divide-y divide-slate-100">
-          {leads.slice(0, 3).map((lead) => (
-            <li key={lead.id} className="px-4 py-4 sm:px-6 hover:bg-slate-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-bold text-slate-800 truncate">{lead.name}</p>
-                <div className="ml-2 flex-shrink-0 flex">
-                  <p className="px-2 inline-flex text-xs leading-5 font-bold rounded bg-slate-200 text-slate-700 uppercase">
-                    {lead.source}
-                  </p>
-                </div>
+
+        {/* System Health / Status */}
+        <div className="bg-catblack p-8 rounded-2xl border border-zinc-800 shadow-2xl text-white flex flex-col">
+           <div className="flex items-center justify-between mb-10">
+             <h3 className="text-sm font-black text-catyellow uppercase tracking-widest font-heading">Service Perimeter</h3>
+             <AlertCircle className="w-4 h-4 text-zinc-600" />
+           </div>
+           
+           <div className="space-y-8 flex-1">
+              <HealthItem label="Core Inventory Service" active={health?.services.inventory || false} lastPing="2ms" />
+              <HealthItem label="Global Billing Gateway" active={health?.services.billing || false} lastPing="14ms" />
+              <HealthItem label="User Authentication Hub" active={health?.services.auth || false} lastPing="5ms" />
+              <HealthItem label="Gemini Intelligence Node" active={health?.services.ai || false} lastPing="245ms" />
+           </div>
+
+           <div className="mt-auto pt-8 border-t border-zinc-900 flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Environment</span>
+                <span className="text-xs font-black text-white uppercase tracking-tighter">Production Cluster</span>
               </div>
-              <div className="mt-2 sm:flex sm:justify-between">
-                <div className="sm:flex">
-                  <p className="flex items-center text-sm text-slate-500">
-                    {lead.email}
-                  </p>
-                </div>
-                <div className="mt-2 flex items-center text-sm text-slate-500 sm:mt-0">
-                  <p>
-                    {new Date(lead.created_at).toLocaleDateString()}
-                  </p>
-                </div>
+              <div className="text-right">
+                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Region</span>
+                <span className="text-xs font-black text-white uppercase tracking-tighter">US-EAST-01</span>
               </div>
-            </li>
-          ))}
-        </ul>
+           </div>
+        </div>
       </div>
     </div>
   );
 };
+
+const KpiCard = ({ label, value, icon: Icon, trend, color, bg }: any) => (
+  <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center group hover:border-catyellow transition-all cursor-default">
+    <div className={`p-4 rounded-xl ${bg} ${color} group-hover:scale-110 transition-transform mr-6`}>
+      <Icon className="w-7 h-7" />
+    </div>
+    <div className="flex flex-col">
+      <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-2">{label}</p>
+      <p className="text-3xl font-black text-catblack font-heading leading-none mb-2">{value}</p>
+      <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1">
+        <TrendingUp className="w-3 h-3 text-emerald-500" /> {trend}
+      </span>
+    </div>
+  </div>
+);
+
+const HealthItem = ({ label, active, lastPing }: { label: string, active: boolean, lastPing: string }) => (
+  <div className="flex items-center justify-between group">
+    <div className="flex flex-col">
+      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest group-hover:text-white transition-colors">{label}</span>
+      <span className="text-[9px] text-zinc-600 font-mono mt-1">LATENCY: {lastPing}</span>
+    </div>
+    <div className="relative">
+      {active && <div className="absolute inset-0 bg-emerald-500 rounded-full blur-sm opacity-50 animate-pulse"></div>}
+      <div className={`w-3 h-3 rounded-full relative z-10 ${active ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+    </div>
+  </div>
+);
 
 export default Dashboard;

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { Quote } from '../types';
-import { Plus, FileText, Send, Trash2 } from 'lucide-react';
+import { Plus, FileText, Eye, Trash2 } from 'lucide-react';
 
 const Quotes = () => {
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -130,7 +131,7 @@ const Quotes = () => {
                       placeholder="Qty"
                       min="1"
                       value={item.quantity}
-                      onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value))}
+                      onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value) || 0)}
                       className="block w-full border border-slate-300 rounded-md shadow-sm py-2 px-3 sm:text-sm focus:ring-red-500 focus:border-red-500"
                     />
                   </div>
@@ -140,7 +141,7 @@ const Quotes = () => {
                       placeholder="Price"
                       min="0"
                       value={item.price}
-                      onChange={(e) => handleItemChange(index, 'price', parseFloat(e.target.value))}
+                      onChange={(e) => handleItemChange(index, 'price', parseFloat(e.target.value) || 0)}
                       className="block w-full border border-slate-300 rounded-md shadow-sm py-2 px-3 sm:text-sm focus:ring-red-500 focus:border-red-500"
                     />
                   </div>
@@ -214,9 +215,9 @@ const Quotes = () => {
                         {quote.status}
                       </span>
                     </div>
-                    <button className="text-slate-400 hover:text-red-700 transition-colors">
-                      <Send className="w-5 h-5" />
-                    </button>
+                    <Link to={`/quotes/${quote.id}`} className="text-slate-400 hover:text-red-700 transition-colors" title="View Quote">
+                      <Eye className="w-5 h-5" />
+                    </Link>
                   </div>
                 </div>
                 {/* Simple Details Preview */}
