@@ -6,11 +6,18 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+# Set minimal default permissions
+permissions:
+  contents: read
+
 jobs:
   # Security and dependency audit
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     
     steps:
       - name: Checkout code
@@ -40,6 +47,9 @@ jobs:
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     
     steps:
       - name: Checkout code
@@ -74,6 +84,9 @@ jobs:
     name: Dependency Review
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
     
     steps:
       - name: Checkout code
@@ -89,6 +102,8 @@ jobs:
     name: Docker Build Test
     runs-on: ubuntu-latest
     needs: build-and-test
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout code
@@ -111,6 +126,8 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout code
@@ -135,6 +152,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [security-audit, build-and-test, docker-build]
     if: always()
+    permissions: {}
     
     steps:
       - name: Check job results

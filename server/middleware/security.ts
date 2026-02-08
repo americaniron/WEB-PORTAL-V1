@@ -146,15 +146,32 @@ function sanitizeObject(obj: any): any {
 
 /**
  * Sanitize string input to prevent XSS
+ * Note: This is basic sanitization for plain text inputs. 
+ * For HTML content, use a proper library like DOMPurify.
+ * This function removes dangerous patterns that could lead to XSS attacks.
  */
 function sanitizeString(str: string): string {
   if (typeof str !== 'string') return str;
 
-  return str
+  // Remove dangerous characters and patterns
+  let sanitized = str
     .replace(/[<>]/g, '') // Remove angle brackets
     .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+\s*=/gi, '') // Remove event handlers
-    .trim();
+    .replace(/data:/gi, '') // Remove data: protocol (prevents data URIs)
+    .replace(/vbscript:/gi, ''); // Remove vbscript: protocol
+  
+  // Remove event handlers - multiple passes to ensure complete removal
+  // This addresses potential bypasses like "ononclick" becoming "onclick" after first removal
+  let previousLength;
+  do {
+    previousLength = sanitized.length;
+    sanitized = sanitized.replace(/on\w+\s*=/gi, ''); // Remove event handlers with equals
+  } while (sanitized.length !== previousLength);
+  
+  // Final cleanup of any remaining "on" prefixed words that might be handlers
+  sanitized = sanitized.replace(/\bon\w+\b/gi, '');
+  
+  return sanitized.trim();
 }
 
 /**
@@ -225,6 +242,11 @@ export function ssrfProtection(url: string): boolean {
   try {
     const parsed = new URL(url);
 
+    // Only allow HTTP and HTTPS (check first to block data:, javascript:, etc.)
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return false;
+    }
+
     // Block private IP ranges
     const privateRanges = [
       /^127\./,  // 127.0.0.0/8
@@ -251,11 +273,6 @@ export function ssrfProtection(url: string): boolean {
       }
     }
 
-    // Only allow HTTP and HTTPS
-    if (!['http:', 'https:'].includes(parsed.protocol)) {
-      return false;
-    }
-
     return true;
   } catch {
     return false;
@@ -273,8 +290,9 @@ export const validators = {
 
   password: (password: string): boolean => {
     // Minimum 8 characters, at least one uppercase, one lowercase, one number, one special char
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    return passwordRegex.test(password) && password.length <= 128;
+    // Matches the broader set used in auth.ts for consistency
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,}$/;
+    return passwordRegex.test(password) && password.length >= 8 && password.length <= 128;
   },
 
   alphanumeric: (str: string): boolean => {

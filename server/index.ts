@@ -63,8 +63,10 @@ export class ProductionServer {
     this.app.use(cloudflareHeaders);
 
     // Security headers with Helmet
+    // Note: We disable Helmet's CSP because we use a custom implementation
+    // that's more flexible for our React/Vite setup
     this.app.use(helmet({
-      contentSecurityPolicy: false, // We use custom CSP
+      contentSecurityPolicy: false, // Using custom CSP in securityHeaders middleware
       hsts: {
         maxAge: parseInt(process.env.HSTS_MAX_AGE || '31536000', 10),
         includeSubDomains: true,
@@ -72,7 +74,7 @@ export class ProductionServer {
       },
     }));
 
-    // Custom security headers
+    // Custom security headers (includes our own CSP implementation)
     this.app.use(securityHeaders({
       trustProxy: this.config.trustProxy,
       cspEnabled: process.env.CSP_ENABLED !== 'false',

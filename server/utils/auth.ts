@@ -118,12 +118,17 @@ class AuthService {
 
   /**
    * Sanitize user object for client response (remove sensitive data)
+   * Intentionally excludes: password_hash, token (if present), and other sensitive fields
+   * @param user - User object from database or authentication
+   * @returns Safe user object for client
    */
-  sanitizeUser(user: any): User {
+  sanitizeUser(user: { id: number; email: string; role: 'admin' | 'user' | 'employee'; [key: string]: any }): User {
     return {
       id: user.id,
       email: user.email,
       role: user.role,
+      // token field is intentionally excluded for security
+      // password_hash and other sensitive fields are excluded
     };
   }
 }
