@@ -10,6 +10,12 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+
+# Environment files - NEVER commit these
+.env
+.env.local
+.env.production
+.env.*.local
 *.local
 
 # Editor directories and files
@@ -22,3 +28,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Build artifacts
+build
+.cache
+
+# Test coverage
+coverage
+
+# Temporary files
+tmp
+temp
+*.tmp

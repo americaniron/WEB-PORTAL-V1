@@ -1,24 +1,49 @@
 {
   "name": "american-iron-hub-pro",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "build:production": "NODE_ENV=production vite build",
+    "preview": "vite preview",
+    "server": "node --loader ts-node/esm server/index.ts",
+    "server:dev": "NODE_ENV=development node --loader ts-node/esm server/index.ts",
+    "server:prod": "NODE_ENV=production node --loader ts-node/esm server/index.ts",
+    "db:init": "node --loader ts-node/esm scripts/init-db.ts",
+    "db:migrate": "node --loader ts-node/esm scripts/migrate.ts",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "audit": "npm audit --production",
+    "audit:fix": "npm audit fix",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "react-dom": "^19.2.3",
-    "recharts": "^3.6.0",
-    "react-router-dom": "^7.11.0",
-    "react": "^19.2.3",
+    "@google/genai": "^1.39.0",
+    "bcrypt": "^5.1.1",
+    "compression": "^1.7.5",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
     "lucide-react": "^0.562.0",
-    "@google/genai": "^1.39.0"
+    "pg": "^8.13.1",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-router-dom": "^7.11.0",
+    "recharts": "^3.6.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/compression": "^1.7.5",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
     "@types/node": "^22.14.0",
+    "@types/pg": "^8.11.10",
     "@vitejs/plugin-react": "^5.0.0",
+    "terser": "^5.46.0",
+    "ts-node": "^10.9.2",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }
