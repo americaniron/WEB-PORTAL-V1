@@ -109,8 +109,26 @@ export const api = {
   auth: {
     login: async (email: string, password: string): Promise<User> => {
       await delay(NETWORK_LATENCY);
-      if (email === 'admin@americaniron.com' && password === 'IronStrong!') {
-        return { id: 1, email, role: 'admin', token: 'JWT_PROD_ACCESS_TOKEN' };
+      // TODO: Replace with proper authentication system
+      // This is a development-only stub
+      // In production, use bcrypt password hashing and JWT tokens
+      console.warn('[SECURITY WARNING] Using development authentication stub');
+      
+      // For development/demo purposes only
+      const validUsers = [
+        { email: 'admin@americaniron.com', role: 'admin' as const },
+        { email: 'user@americaniron.com', role: 'user' as const },
+      ];
+      
+      const user = validUsers.find(u => u.email === email);
+      if (user) {
+        // In production, verify password hash with bcrypt here
+        return { 
+          id: user.email === 'admin@americaniron.com' ? 1 : 2, 
+          email, 
+          role: user.role, 
+          token: 'DEV_TOKEN_REPLACE_WITH_JWT' 
+        };
       }
       throw new Error('401: Invalid Security Credentials');
     }
